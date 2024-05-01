@@ -11,8 +11,7 @@ const app = http.createServer((req, res) => {
     fs.readFile(filePath, 'utf8', (err, data) => {
       if (err) {
         res.statusCode = 500;
-        res.end('Cannot load the database');
-        return; // Exit early on error
+        throw new Error('Cannot load the database');
       }
 
       let response = 'This is the list of our students\n';

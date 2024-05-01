@@ -1,18 +1,15 @@
 const http = require('http');
-const fs = require('fs');
+const fs = require('fs').promises; // Use fs.promises
 
 const port = 1245;
 
-const app = http.createServer((req, res) => {
+const app = http.createServer(async (req, res) => {
   res.setHeader('Content-Type', 'text/plain');
 
   // Define a function to handle reading file and responding
-  function handleStudentsResponse(filePath) {
-    fs.readFile(filePath, 'utf8', (err, data) => {
-      if (err) {
-        res.statusCode = 500;
-        throw new Error('Cannot load the database');
-      }
+  async function handleStudentsResponse(filePath) {
+    try {
+      const data = await fs.readFile(filePath, 'utf8');
 
       let response = 'This is the list of our students\n';
       const lines = data.split('\n').filter((line) => line.trim() !== '');
@@ -28,7 +25,10 @@ const app = http.createServer((req, res) => {
       response += `Number of students in SWE: ${numberOfStudentsInSWE}. List: ${studentsInSWE.map((line) => line.split(',')[0]).join(', ')}`;
 
       res.end(response);
-    });
+    } catch (err) {
+      res.statusCode = 500;
+      res.end('Cannot load the database');
+    }
   }
 
   // Handle incoming requests
@@ -37,7 +37,7 @@ const app = http.createServer((req, res) => {
     res.end();
   } else if (req.url === '/students' && req.method === 'GET') {
     const filePath = process.argv[2];
-    handleStudentsResponse(filePath);
+    await handleStudentsResponse(filePath);
   } else {
     // Return 404 for other routes
     res.statusCode = 404;
